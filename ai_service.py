@@ -2,7 +2,13 @@ import os
 import google.generativeai as genai
 from models import MealAnalysis
 
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+# Load the key from the environment variable
+api_key = os.getenv("YOUR_GEMINI_API_KEY")
+
+if not api_key:
+    raise ValueError("YOUR_GEMINI_API_KEY is not set in the environment!")
+
+genai.configure(api_key=api_key)
 
 async def analyze_meal_with_ai(description: str) -> MealAnalysis:
     model = genai.GenerativeModel('gemini-1.5-flash')
