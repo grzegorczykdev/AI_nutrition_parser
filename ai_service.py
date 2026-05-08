@@ -1,31 +1,32 @@
 import os
-import google.generativeai as genai
+from dotenv import load_dotenv
+from google import genai
 from models import MealAnalysis
+from tenacity import retry, stop_after_attempt, wait_exponential
 
-# Load the key from the environment variable
+
+load_dotenv()
+
 api_key = os.getenv("YOUR_GEMINI_API_KEY")
 
 if not api_key:
     raise ValueError("YOUR_GEMINI_API_KEY is not set in the environment!")
 
-genai.configure(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+)
 async def analyze_meal_with_ai(description: str) -> MealAnalysis:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
-    prompt = f"""
-    You are a professional dietitian. Analyze the following meal description 
-    and provide a detailed nutritional breakdown.
-    
-    Meal: {description}
-    """
-
-    response = model.generate_content(
-        prompt,
-        generation_config=genai.GenerationConfig(
-            response_mime_type="application/json",
-            response_schema=MealAnalysis
-        )
+    response = client.models.generate_content(
+        model="gemini-3.1-flash-lite",
+        contents=f"Analyze this meal: {description}",
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": MealAnalysis,
+        },
     )
 
-    return MealAnalysis.model_validate_json(response.text)
+    return response.parsed
