@@ -1,14 +1,23 @@
 from pydantic import BaseModel, Field
 from typing import List
 
-class Ingredient(BaseModel):
-    name: str = Field(description="Nazwa produktu, np. 'Jabłko'")
-    amount: float = Field(description="Ilość (liczba)")
-    unit: str = Field(description="Jednostka, np. 'g', 'ml', 'sztuka'")
-    calories: int = Field(description="Przybliżona liczba kalorii")
+
+class Macros(BaseModel):
+    protein: float = Field(description="Total protein in grams")
+    fat: float = Field(description="Total fat in grams")
+    carbs: float = Field(description="Total carbohydrates in grams")
+
+
+class MealItem(BaseModel):
+    name: str
+    calories: int
+    amount: str
+
 
 class MealAnalysis(BaseModel):
-    items: List[Ingredient]
+    items: List[MealItem]
     total_calories: int
-    health_score: int = Field(ge=1, le=10, description="Ocena zdrowotna posiłku od 1 do 10")
-    summary: str = Field(description="Krótki komentarz dietetyczny")
+    macros: Macros
+    glycemic_index: str = Field(description="Rating: Low, Medium, or High")
+    is_balanced: bool = Field(description="Whether the meal has a good ratio of P/F/C")
+    summary: str
