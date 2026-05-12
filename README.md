@@ -82,8 +82,8 @@ Zero-leaked secrets policy. API keys and deployment configurations are strictly 
 ### Backend
 ```bash
 # Clone the repository
-git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
-cd your-repo-name
+git clone https://github.com/grzegorczykdev/AI_nutrition_parser.git
+cd AI_nutrition_parser
 
 # Setup environment and sync dependencies
 uv sync
