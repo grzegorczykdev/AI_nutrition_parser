@@ -10,7 +10,7 @@
 
 <br>
 <video autoplay loop muted playsinline width="100%">
-  <source src="https://github.com/user-attachments/assets/f0969aa6-b0fa-4e81-808a-9456553c3fe7" type="video/mp4">
+  <source src="https://github.com/user-attachments/assets/9c31e4c9-7e2a-4a45-b930-d95d3992ee30" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 <br>
