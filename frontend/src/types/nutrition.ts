@@ -13,6 +13,7 @@ export interface Macros {
 export interface AnalyzeResponse {
   items: MealItem[]
   total_calories: number
+  meal_score: number
   macros: Macros
   glycemic_index: string
   is_balanced: boolean

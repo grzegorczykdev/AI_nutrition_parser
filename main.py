@@ -1,14 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from models import MealAnalysis
 from ai_service import analyze_meal_with_ai
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 app = FastAPI(title="AI Nutrition Parser")
-
-
-class AnalyzeRequest(BaseModel):
-    meal_description: str
 
 # Konfiguracja CORS
 app.add_middleware(
@@ -21,14 +16,36 @@ app.add_middleware(
 
 
 @app.post("/analyze", response_model=MealAnalysis)
-async def analyze_endpoint(payload: AnalyzeRequest):
+async def analyze_endpoint(
+    meal_description: str = Form(default=""),
+    file: UploadFile | None = File(default=None),
+):
     """
-    Przyjmuje tekstowy opis posiłku i zwraca ustrukturyzowaną analizę AI.
+    Przyjmuje opis posiłku i opcjonalne zdjęcie, zwraca analizę AI.
     """
     try:
-        # Wywołanie serwisu AI
-        result = await analyze_meal_with_ai(payload.meal_description)
+        normalized_description = meal_description.strip()
+        image_bytes: bytes | None = None
+        image_mime_type: str | None = None
+
+        if file is not None:
+            image_bytes = await file.read()
+            image_mime_type = file.content_type or "image/jpeg"
+
+        if not normalized_description and not image_bytes:
+            raise HTTPException(
+                status_code=422,
+                detail="Provide at least one input: meal_description or file.",
+            )
+
+        result = await analyze_meal_with_ai(
+            description=normalized_description,
+            image_bytes=image_bytes,
+            image_mime_type=image_mime_type,
+        )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

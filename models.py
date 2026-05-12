@@ -17,6 +17,7 @@ class MealItem(BaseModel):
 class MealAnalysis(BaseModel):
     items: List[MealItem]
     total_calories: int
+    meal_score: int = Field(ge=1, le=10, description="Overall meal quality score from 1 to 10")
     macros: Macros
     glycemic_index: str = Field(description="Rating: Low, Medium, or High")
     is_balanced: bool = Field(description="Whether the meal has a good ratio of P/F/C")

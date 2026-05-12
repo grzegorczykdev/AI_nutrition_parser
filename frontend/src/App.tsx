@@ -1,31 +1,103 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Salad, NotebookPen, Activity, Gauge, Scale } from "lucide-react";
+import imageCompression from "browser-image-compression";
+import {
+  Sparkles,
+  Salad,
+  NotebookPen,
+  Activity,
+  Gauge,
+  Scale,
+  Camera,
+  ImageIcon,
+  X,
+  AlertCircle,
+} from "lucide-react";
 import { analyzeMeal, ApiError } from "./api/analyzeMeal";
 import { ErrorAlert } from "./components/ErrorAlert";
+import { HealthScoreGauge } from "./components/HealthScoreGauge";
 import { IngredientCards } from "./components/IngredientCards";
 import { LoadingPulse } from "./components/LoadingPulse";
 import type { AnalyzeResponse } from "./types/nutrition";
 
 function App() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [mealDescription, setMealDescription] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const trimmedDescription = mealDescription.trim();
 
   const canSubmit = useMemo(
-    () => !isLoading && mealDescription.trim().length > 5,
-    [isLoading, mealDescription],
+    () => !isLoading && (trimmedDescription.length > 0 || selectedFile !== null),
+    [isLoading, trimmedDescription, selectedFile],
   );
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(file);
+    setPreviewUrl(file ? URL.createObjectURL(file) : "");
+  };
+
+  const handleRemoveImage = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleAnalyzeMeal = async () => {
-    if (!canSubmit) return;
+    if (!trimmedDescription && !selectedFile) {
+      setErrorMessage("Add a meal description or upload an image before analyzing.");
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      const data = await analyzeMeal(mealDescription.trim());
+      let fileForUpload: File | null = selectedFile;
+
+      if (selectedFile) {
+        try {
+          fileForUpload = await imageCompression(selectedFile, {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1024,
+            fileType: "image/webp",
+            useWebWorker: true,
+          });
+        } catch {
+          fileForUpload = await imageCompression(selectedFile, {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1024,
+            fileType: "image/jpeg",
+            useWebWorker: true,
+          });
+        }
+      }
+
+      const data = await analyzeMeal(trimmedDescription, fileForUpload);
       setResult(data);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -55,21 +127,95 @@ function App() {
             breakdown, and a professional health assessment.
           </p>
 
-          <div className="mt-6">
-            <label
-              htmlFor="meal-description"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              Meal description
-            </label>
-            <textarea
-              id="meal-description"
-              value={mealDescription}
-              onChange={(event) => setMealDescription(event.target.value)}
-              placeholder="Example: Grilled salmon with quinoa, avocado, steamed broccoli and olive oil dressing."
-              rows={6}
-              className="w-full resize-none rounded-2xl border border-slate-200 bg-[#fbfcfa] px-4 py-3 text-sm leading-relaxed text-slate-800 shadow-inner outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100 sm:text-base"
-            />
+          <div
+            className={`mt-6 ${
+              previewUrl ? "md:grid md:grid-cols-2 md:items-stretch md:gap-6" : ""
+            }`}
+          >
+            <div className="flex flex-col">
+              <label
+                htmlFor="meal-description"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Meal description
+              </label>
+              <textarea
+                id="meal-description"
+                value={mealDescription}
+                onChange={(event) => setMealDescription(event.target.value)}
+                placeholder="Example: Grilled salmon with quinoa, avocado, steamed broccoli and olive oil dressing."
+                rows={previewUrl ? 14 : 6}
+                className="w-full flex-1 resize-none rounded-2xl border border-slate-200 bg-[#fbfcfa] px-4 py-3 text-sm leading-relaxed text-slate-800 shadow-inner outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100 sm:text-base"
+              />
+            </div>
+
+            <div className="mt-4 flex flex-col md:mt-0">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                <AlertCircle size={16} className="mt-0.5 shrink-0 text-slate-500" />
+                <p>
+                  Dla lepszej dokładności analizy wielkości posiłku, zamieść na
+                  zdjęciu dłoń lub widelec dla skali.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                className="group w-full rounded-2xl border border-dashed border-slate-300 bg-[#fbfcfa] p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50/40"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-white p-2.5 text-emerald-700 shadow-sm">
+                    <Camera size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Upload / Take Photo
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Add a meal photo for Vision analysis
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {!previewUrl && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                  <ImageIcon size={14} />
+                  No image selected yet
+                </div>
+              )}
+
+              {previewUrl && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="relative mt-3 aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                >
+                  <img
+                    src={previewUrl}
+                    alt="Selected meal preview"
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute right-3 top-3 inline-flex items-center justify-center rounded-full bg-white/90 p-2 text-slate-700 shadow-sm transition hover:bg-white"
+                    aria-label="Remove selected image"
+                  >
+                    <X size={16} />
+                  </button>
+                </motion.div>
+              )}
+            </div>
           </div>
 
           <div className="mt-4 flex justify-end">
@@ -110,6 +256,14 @@ function App() {
               Metabolic snapshot
             </h2>
             <div className="mt-4 grid gap-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wider text-slate-500">
+                  Meal score
+                </p>
+                <div className="mt-2">
+                  <HealthScoreGauge score={result.meal_score} />
+                </div>
+              </div>
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
                 <p className="text-xs uppercase tracking-wider text-emerald-700">
                   Total calories
