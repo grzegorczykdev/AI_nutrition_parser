@@ -8,7 +8,7 @@
 
 > **Advanced AI Meal Analysis** - a full-stack reference implementation for multimodal vision analysis, featuring deterministic calorie guardrails and cost-aware autonomous verification.
 
-https://github.com/user-attachments/assets/9c31e4c9-7e2a-4a45-b930-d95d3992ee30
+https://github.com/user-attachments/assets/26696126-f2d7-4d32-a130-045fb08c92d9
 
 ---
 
