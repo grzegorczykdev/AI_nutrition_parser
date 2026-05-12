@@ -6,7 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-> **Advanced AI Meal Analysis** — a full-stack reference implementation for multimodal vision analysis, featuring deterministic calorie guardrails and cost-aware autonomous verification.
+> **Advanced AI Meal Analysis** - a full-stack reference implementation for multimodal vision analysis, featuring deterministic calorie guardrails and cost-aware autonomous verification.
 
 ---
 
@@ -50,8 +50,9 @@ graph TD
     Math -- Discrepancy Found --> Judge[Gemini 3.1 Pro: Corrective Audit]
     Judge --> Success
     Success --> UI[React: Metabolic Snapshot]
+```
 
-    ## 🚀 Key Technical Solutions
+## 🚀 Key Technical Solutions
 
 ### The Hallucination Barrier: Triggered Judge Pattern
 LLMs can occasionally produce "hallucinated" JSON that violates basic physics. This project implements a **self-correcting pipeline**: if the deterministic validator flags a mismatch, the flawed draft is sent to a secondary "Judge" model for a corrective pass. This ensures data integrity without the high latency/cost of using heavy models for every request.
@@ -88,12 +89,14 @@ cd your-repo-name
 uv sync
 cp .env.example .env # Add your YOUR_GEMINI_API_KEY
 uv run main.py
+```
 
 ### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
+```
 
 ## ⚠️ Disclaimer
 *This project is an engineering portfolio piece. AI-generated nutritional estimates are for informational purposes only and do not constitute professional medical advice.*
