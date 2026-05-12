@@ -1,4 +1,4 @@
-import type { AnalyzeResponse } from "../types/nutrition"
+import type { VerifiedAnalyzeResponse } from "../types/nutrition"
 
 const API_URL = "http://127.0.0.1:8000/analyze"
 
@@ -15,7 +15,7 @@ export class ApiError extends Error {
 export async function analyzeMeal(
   mealDescription: string,
   file?: File | null,
-): Promise<AnalyzeResponse> {
+): Promise<VerifiedAnalyzeResponse> {
   const formData = new FormData()
   formData.append("meal_description", mealDescription)
   if (file) {
@@ -45,5 +45,5 @@ export async function analyzeMeal(
     throw new ApiError(serverMessage || fallbackMessage, response.status)
   }
 
-  return (await response.json()) as AnalyzeResponse
+  return (await response.json()) as VerifiedAnalyzeResponse
 }
